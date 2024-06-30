@@ -162,7 +162,7 @@ def main():
         score = 0
         high_score = 0
 
-    display_board(game_board)
+    draw_board(game_board)
     print(f"Score: {score}")
     print(f"High Score: {high_score}")
 
