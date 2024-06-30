@@ -2,10 +2,11 @@ import pygame
 import random
 import copy
 import json
+import time
 
 # Pygame setup
 pygame.init()
-WIDTH, HEIGHT = 400, 500
+WIDTH, HEIGHT = 400, 400
 TILE_SIZE = WIDTH // 4
 BACKGROUND_COLOR = (187, 173, 160)
 TILE_COLORS = {
@@ -23,7 +24,7 @@ TILE_COLORS = {
     2048: (237, 194, 46),
 }
 FONT = pygame.font.SysFont('arial', 40)
-SMALL_FONT = pygame.font.SysFont('arial', 24)
+SMALL_FONT = pygame.font.SysFont('arial', 20)
 
 def draw_board(screen, board, score, high_score):
     screen.fill(BACKGROUND_COLOR)
@@ -36,12 +37,29 @@ def draw_board(screen, board, score, high_score):
                 text = FONT.render(str(value), True, (0, 0, 0))
                 text_rect = text.get_rect(center=(j * TILE_SIZE + TILE_SIZE / 2, i * TILE_SIZE + TILE_SIZE / 2))
                 screen.blit(text, text_rect)
-
     score_text = SMALL_FONT.render(f"Score: {score}", True, (0, 0, 0))
     high_score_text = SMALL_FONT.render(f"High Score: {high_score}", True, (0, 0, 0))
-    screen.blit(score_text, (10, HEIGHT - 90))
-    screen.blit(high_score_text, (10, HEIGHT - 60))
+    screen.blit(score_text, (10, 10))
+    screen.blit(high_score_text, (10, 30))
     pygame.display.update()
+
+def draw_game_over(screen, score):
+    screen.fill(BACKGROUND_COLOR)
+    game_over_text = FONT.render("Game Over!", True, (255, 0, 0))
+    score_text = SMALL_FONT.render(f"Final Score: {score}", True, (0, 0, 0))
+    screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 + game_over_text.get_height()))
+    pygame.display.update()
+    pygame.time.wait(3000)
+
+def draw_victory(screen, score):
+    screen.fill(BACKGROUND_COLOR)
+    victory_text = FONT.render("You Win!", True, (0, 255, 0))
+    score_text = SMALL_FONT.render(f"Score: {score}", True, (0, 0, 0))
+    screen.blit(victory_text, (WIDTH // 2 - victory_text.get_width() // 2, HEIGHT // 2 - victory_text.get_height() // 2))
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 + victory_text.get_height()))
+    pygame.display.update()
+    pygame.time.wait(3000)
 
 def initialize_board():
     board = [[0] * 4 for _ in range(4)]
@@ -133,40 +151,36 @@ def update_high_score(score, high_score):
         print(f"New High Score: {high_score}")
     return high_score
 
-def animate_move(screen, old_board, new_board, score, high_score, direction):
+def animate_move(screen, old_board, new_board, score, high_score, move):
     steps = 10
-    delay = 20  # milliseconds
+    delay = 50  # milliseconds
 
-    old_positions = {(i, j): (i, j) for i in range(4) for j in range(4) if old_board[i][j] != 0}
-    for step in range(steps + 1):
-        screen.fill(BACKGROUND_COLOR)
+    for step in range(steps):
+        interpolated_board = copy.deepcopy(old_board)
         for i in range(4):
             for j in range(4):
-                value = old_board[i][j]
-                if value != 0:
-                    start_pos = old_positions[(i, j)]
-                    end_pos = (i, j)
-                    if direction == 'left':
-                        new_pos = (start_pos[0], start_pos[1] - (start_pos[1] - end_pos[1]) * step / steps)
-                    elif direction == 'right':
-                        new_pos = (start_pos[0], start_pos[1] + (end_pos[1] - start_pos[1]) * step / steps)
-                    elif direction == 'up':
-                        new_pos = (start_pos[0] - (start_pos[0] - end_pos[0]) * step / steps, start_pos[1])
-                    elif direction == 'down':
-                        new_pos = (start_pos[0] + (end_pos[0] - start_pos[0]) * step / steps, start_pos[1])
+                if old_board[i][j] != new_board[i][j]:
+                    if move == 'left':
+                        new_x = j * TILE_SIZE - step * TILE_SIZE / steps
+                        new_rect = pygame.Rect(new_x, i * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    elif move == 'right':
+                        new_x = j * TILE_SIZE + step * TILE_SIZE / steps
+                        new_rect = pygame.Rect(new_x, i * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                    elif move == 'up':
+                        new_y = i * TILE_SIZE - step * TILE_SIZE / steps
+                        new_rect = pygame.Rect(j * TILE_SIZE, new_y, TILE_SIZE, TILE_SIZE)
+                    elif move == 'down':
+                        new_y = i * TILE_SIZE + step * TILE_SIZE / steps
+                        new_rect = pygame.Rect(j * TILE_SIZE, new_y, TILE_SIZE, TILE_SIZE)
 
-                    new_pos = (int(new_pos[0] * TILE_SIZE), int(new_pos[1] * TILE_SIZE))
-                    color = TILE_COLORS.get(value, TILE_COLORS[2048])
-                    pygame.draw.rect(screen, color, (new_pos[1], new_pos[0], TILE_SIZE, TILE_SIZE))
-                    text = FONT.render(str(value), True, (0, 0, 0))
-                    text_rect = text.get_rect(center=(new_pos[1] + TILE_SIZE / 2, new_pos[0] + TILE_SIZE / 2))
-                    screen.blit(text, text_rect)
+                    color = TILE_COLORS.get(old_board[i][j], TILE_COLORS[2048])
+                    pygame.draw.rect(screen, color, new_rect)
+                    if old_board[i][j] != 0:
+                        text = FONT.render(str(old_board[i][j]), True, (0, 0, 0))
+                        text_rect = text.get_rect(center=(new_rect.x + TILE_SIZE / 2, new_rect.y + TILE_SIZE / 2))
+                        screen.blit(text, text_rect)
 
-        score_text = SMALL_FONT.render(f"Score: {score}", True, (0, 0, 0))
-        high_score_text = SMALL_FONT.render(f"High Score: {high_score}", True, (0, 0, 0))
-        screen.blit(score_text, (10, HEIGHT - 90))
-        screen.blit(high_score_text, (10, HEIGHT - 60))
-        pygame.display.update()
+        draw_board(screen, interpolated_board, score, high_score)
         pygame.time.delay(delay)
 
 def main():
@@ -188,8 +202,8 @@ def main():
     print(f"Score: {score}")
     print(f"High Score: {high_score}")
 
-    previous_board = copy.deepcopy(game_board)
-    previous_score = score
+    previous_boards = [copy.deepcopy(game_board)]
+    previous_scores = [score]
 
     running = True
     while running:
@@ -198,8 +212,8 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key in [pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d, pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT]:
-                    previous_board = copy.deepcopy(game_board)
-                    previous_score = score
+                    previous_boards.append(copy.deepcopy(game_board))
+                    previous_scores.append(score)
 
                     new_board, move_score = handle_input(game_board, event.key)
                     if new_board != game_board:
@@ -220,16 +234,22 @@ def main():
                         add_random_tile(game_board)
                         draw_board(screen, game_board, score, high_score)
                         high_score = update_high_score(score, high_score)
+
+                        if any(2048 in row for row in game_board):
+                            draw_victory(screen, score)
+                            running = False
+
                         if is_game_over(game_board):
-                            print("Game Over! No more moves possible.")
-                            print(f"Final Score: {score}")
+                            draw_game_over(screen, score)
                             running = False
                     else:
                         print("No valid move in that direction!")
                 elif event.key == pygame.K_u:
-                    game_board = previous_board
-                    score = previous_score
-                    draw_board(screen, game_board, score, high_score)
+                    if len(previous_boards) > 1:
+                        previous_boards.pop()
+                        game_board = previous_boards[-1]
+                        score = previous_scores.pop()
+                        draw_board(screen, game_board, score, high_score)
                 elif event.key == pygame.K_s:
                     save_game(game_board, score, high_score)
                     print(f"Score: {score}")
@@ -240,5 +260,5 @@ def main():
 
     pygame.quit()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
