@@ -29,11 +29,42 @@ def move_left(board):
         new_board.append(new_row)
     return new_board
 
+def move_right(board):
+    reversed_board = [row[::-1] for row in board]
+    new_board = move_left(reversed_board)
+    return [row[::-1] for row in new_board]
+
+def transpose(board):
+    return [list(row) for row in zip(*board)]
+
+def move_up(board):
+    transposed_board = transpose(board)
+    new_board = move_left(transposed_board)
+    return transpose(new_board)
+
+def move_down(board):
+    transposed_board = transpose(board)
+    new_board = move_right(transposed_board)
+    return transpose(new_board)
+
 if __name__ == "__main__":
     game_board = initialize_board()
     add_random_tile(game_board)
     add_random_tile(game_board)
     display_board(game_board)
+
     print("\nAfter moving left:\n")
     game_board = move_left(game_board)
+    display_board(game_board)
+
+    print("\nAfter moving right:\n")
+    game_board = move_right(game_board)
+    display_board(game_board)
+
+    print("\nAfter moving up:\n")
+    game_board = move_up(game_board)
+    display_board(game_board)
+
+    print("\nAfter moving down:\n")
+    game_board = move_down(game_board)
     display_board(game_board)
