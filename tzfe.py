@@ -2,11 +2,10 @@ import pygame
 import random
 import copy
 import json
-import time
 
 # Pygame setup
 pygame.init()
-WIDTH, HEIGHT = 400, 400
+WIDTH, HEIGHT = 400, 500
 TILE_SIZE = WIDTH // 4
 BACKGROUND_COLOR = (187, 173, 160)
 TILE_COLORS = {
@@ -24,6 +23,7 @@ TILE_COLORS = {
     2048: (237, 194, 46),
 }
 FONT = pygame.font.SysFont('arial', 40)
+SMALL_FONT = pygame.font.SysFont('arial', 24)
 
 def draw_board(screen, board, score, high_score):
     screen.fill(BACKGROUND_COLOR)
@@ -36,6 +36,11 @@ def draw_board(screen, board, score, high_score):
                 text = FONT.render(str(value), True, (0, 0, 0))
                 text_rect = text.get_rect(center=(j * TILE_SIZE + TILE_SIZE / 2, i * TILE_SIZE + TILE_SIZE / 2))
                 screen.blit(text, text_rect)
+
+    score_text = SMALL_FONT.render(f"Score: {score}", True, (0, 0, 0))
+    high_score_text = SMALL_FONT.render(f"High Score: {high_score}", True, (0, 0, 0))
+    screen.blit(score_text, (10, HEIGHT - 90))
+    screen.blit(high_score_text, (10, HEIGHT - 60))
     pygame.display.update()
 
 def initialize_board():
@@ -128,30 +133,11 @@ def update_high_score(score, high_score):
         print(f"New High Score: {high_score}")
     return high_score
 
-def animate_move(screen, board, score, high_score, move):
-    steps = 10
-    delay = 50  # milliseconds
-    old_board = copy.deepcopy(board)
-
-    for step in range(steps):
-        draw_board(screen, old_board, score, high_score)
-        for i in range(4):
-            for j in range(4):
-                if move == 'left' and old_board[i][j] != 0:
-                    new_x = j - step * TILE_SIZE / steps
-                    new_rect = pygame.Rect(new_x, i * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                    pygame.draw.rect(screen, TILE_COLORS.get(old_board[i][j], TILE_COLORS[2048]), new_rect)
-                    if old_board[i][j] != 0:
-                        text = FONT.render(str(old_board[i][j]), True, (0, 0, 0))
-                        text_rect = text.get_rect(center=(new_x + TILE_SIZE / 2, i * TILE_SIZE + TILE_SIZE / 2))
-                        screen.blit(text, text_rect)
-        pygame.display.update()
-        pygame.time.delay(delay)
-
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('2048')
     clock = pygame.time.Clock()
+    
     load = input("Load saved game? (y/n): ")
     if load.lower() == 'y':
         game_board, score, high_score = load_game()
@@ -162,7 +148,7 @@ def main():
         score = 0
         high_score = 0
 
-    draw_board(game_board)
+    draw_board(screen, game_board, score, high_score)
     print(f"Score: {score}")
     print(f"High Score: {high_score}")
 
@@ -181,17 +167,6 @@ def main():
 
                     new_board, move_score = handle_input(game_board, event.key)
                     if new_board != game_board:
-                        move_direction = ''
-                        if event.key in [pygame.K_a, pygame.K_LEFT]:
-                            move_direction = 'left'
-                        elif event.key in [pygame.K_d, pygame.K_RIGHT]:
-                            move_direction = 'right'
-                        elif event.key in [pygame.K_w, pygame.K_UP]:
-                            move_direction = 'up'
-                        elif event.key in [pygame.K_s, pygame.K_DOWN]:
-                            move_direction = 'down'
-                        
-                        animate_move(screen, new_board, score, high_score, move_direction)
                         game_board = new_board
                         score += move_score
                         add_random_tile(game_board)
