@@ -1,5 +1,6 @@
 import random
 import copy
+import json
 
 BOARD_SIZE = 4
 
@@ -73,18 +74,43 @@ def is_game_over(board):
                 return False
     return True
 
+def save_game(board, score):
+    game_state = {
+        'board': board,
+        'score': score
+    }
+    with open('2048_save.json', 'w') as f:
+        json.dump(game_state, f)
+
+def load_game():
+    try:
+        with open('2048_save.json', 'r') as f:
+            game_state = json.load(f)
+            return game_state['board'], game_state['score']
+    except FileNotFoundError:
+        print("No saved game found. Starting a new game.")
+        return initialize_board(), 0
+
 if __name__ == "__main__":
-    game_board = initialize_board()
-    add_random_tile(game_board)
-    add_random_tile(game_board)
-    score = 0
-    display_board(game_board)
+    print("Do you want to load a saved game? (y/n)")
+    if input().lower() == 'y':
+        game_board, score = load_game()
+        if game_board == initialize_board():
+            add_random_tile(game_board)
+            add_random_tile(game_board)
+    else:
+        game_board = initialize_board()
+        add_random_tile(game_board)
+        add_random_tile(game_board)
+        score = 0
     
+    display_board(game_board)
+
     previous_board = copy.deepcopy(game_board)
     previous_score = score
 
     while True:
-        move = input("Enter move (w/a/s/d) or 'u' to undo: ")
+        move = input("Enter move (w/a/s/d), 'u' to undo, 'q' to quit and save: ")
         if move in ['w', 'a', 's', 'd']:
             previous_board = copy.deepcopy(game_board)
             previous_score = score
@@ -107,5 +133,9 @@ if __name__ == "__main__":
             score = previous_score
             display_board(game_board)
             print(f"Score: {score}")
+        elif move == 'q':
+            save_game(game_board, score)
+            print("Game saved. Exiting.")
+            break
         else:
-            print("Invalid move! Please enter 'w', 'a', 's', 'd', or 'u' to undo.")
+            print("Invalid move! Please enter 'w', 'a', 's', 'd', 'u' to undo, or 'q' to quit and save.")
