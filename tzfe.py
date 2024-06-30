@@ -2,10 +2,9 @@ import pygame
 import random
 import copy
 import json
-import time
 
-# Pygame setup
 pygame.init()
+pygame.mixer.init()
 WIDTH, HEIGHT = 400, 400
 TILE_SIZE = WIDTH // 4
 BACKGROUND_COLOR = (187, 173, 160)
@@ -26,6 +25,10 @@ TILE_COLORS = {
 FONT = pygame.font.SysFont('arial', 40)
 SMALL_FONT = pygame.font.SysFont('arial', 20)
 
+merge_sound = pygame.mixer.Sound('merge.wav')
+game_over_sound = pygame.mixer.Sound('game_over.wav')
+victory_sound = pygame.mixer.Sound('victory.wav')
+
 def draw_board(screen, board, score, high_score):
     screen.fill(BACKGROUND_COLOR)
     for i in range(4):
@@ -41,6 +44,18 @@ def draw_board(screen, board, score, high_score):
     high_score_text = SMALL_FONT.render(f"High Score: {high_score}", True, (0, 0, 0))
     screen.blit(score_text, (10, 10))
     screen.blit(high_score_text, (10, 30))
+
+
+    restart_button = pygame.Rect(250, 10, 100, 40)
+    pygame.draw.rect(screen, (0, 255, 0), restart_button)
+    restart_text = SMALL_FONT.render("Restart", True, (0, 0, 0))
+    screen.blit(restart_text, (270, 20))
+
+    quit_button = pygame.Rect(250, 60, 100, 40)
+    pygame.draw.rect(screen, (255, 0, 0), quit_button)
+    quit_text = SMALL_FONT.render("Quit", True, (0, 0, 0))
+    screen.blit(quit_text, (280, 70))
+
     pygame.display.update()
 
 def draw_game_over(screen, score):
@@ -153,7 +168,7 @@ def update_high_score(score, high_score):
 
 def animate_move(screen, old_board, new_board, score, high_score, move):
     steps = 10
-    delay = 50  # milliseconds
+    delay = 50  
 
     for step in range(steps):
         interpolated_board = copy.deepcopy(old_board)
@@ -182,6 +197,7 @@ def animate_move(screen, old_board, new_board, score, high_score, move):
 
         draw_board(screen, interpolated_board, score, high_score)
         pygame.time.delay(delay)
+        pygame.display.flip()
 
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -199,8 +215,6 @@ def main():
         high_score = 0
 
     draw_board(screen, game_board, score, high_score)
-    print(f"Score: {score}")
-    print(f"High Score: {high_score}")
 
     previous_boards = [copy.deepcopy(game_board)]
     previous_scores = [score]
