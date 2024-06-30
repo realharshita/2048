@@ -74,10 +74,11 @@ def is_game_over(board):
                 return False
     return True
 
-def save_game(board, score):
+def save_game(board, score, high_score):
     game_state = {
         'board': board,
-        'score': score
+        'score': score,
+        'high_score': high_score
     }
     with open('savegame.json', 'w') as f:
         json.dump(game_state, f)
@@ -87,22 +88,31 @@ def load_game():
     try:
         with open('savegame.json', 'r') as f:
             game_state = json.load(f)
-        return game_state['board'], game_state['score']
+        return game_state['board'], game_state['score'], game_state['high_score']
     except FileNotFoundError:
         print("No saved game found!")
-        return initialize_board(), 0
+        return initialize_board(), 0, 0
+
+def update_high_score(score, high_score):
+    if score > high_score:
+        high_score = score
+        print(f"New High Score: {high_score}")
+    return high_score
 
 if __name__ == "__main__":
     load = input("Load saved game? (y/n): ")
     if load.lower() == 'y':
-        game_board, score = load_game()
+        game_board, score, high_score = load_game()
     else:
         game_board = initialize_board()
         add_random_tile(game_board)
         add_random_tile(game_board)
         score = 0
+        high_score = 0
 
     display_board(game_board)
+    print(f"Score: {score}")
+    print(f"High Score: {high_score}")
 
     previous_board = copy.deepcopy(game_board)
     previous_score = score
@@ -120,6 +130,8 @@ if __name__ == "__main__":
                 add_random_tile(game_board)
                 display_board(game_board)
                 print(f"Score: {score}")
+                high_score = update_high_score(score, high_score)
+                print(f"High Score: {high_score}")
                 if is_game_over(game_board):
                     print("Game Over! No more moves possible.")
                     print(f"Final Score: {score}")
@@ -131,7 +143,8 @@ if __name__ == "__main__":
             score = previous_score
             display_board(game_board)
             print(f"Score: {score}")
+            print(f"High Score: {high_score}")
         elif move == 'save':
-            save_game(game_board, score)
+            save_game(game_board, score, high_score)
         else:
             print("Invalid move! Please enter 'w', 'a', 's', 'd', 'u' to undo, or 'save' to save the game.")
