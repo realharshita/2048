@@ -9,6 +9,7 @@ def initialize_board():
 def display_board(board):
     for row in board:
         print(row)
+    print()
 
 def add_random_tile(board):
     empty_positions = [(i, j) for i in range(BOARD_SIZE) for j in range(BOARD_SIZE) if board[i][j] == 0]
@@ -47,24 +48,28 @@ def move_down(board):
     new_board = move_right(transposed_board)
     return transpose(new_board)
 
+def handle_input(board, move):
+    if move == 'w':
+        return move_up(board)
+    elif move == 's':
+        return move_down(board)
+    elif move == 'a':
+        return move_left(board)
+    elif move == 'd':
+        return move_right(board)
+    return board
+
 if __name__ == "__main__":
     game_board = initialize_board()
     add_random_tile(game_board)
     add_random_tile(game_board)
     display_board(game_board)
 
-    print("\nAfter moving left:\n")
-    game_board = move_left(game_board)
-    display_board(game_board)
-
-    print("\nAfter moving right:\n")
-    game_board = move_right(game_board)
-    display_board(game_board)
-
-    print("\nAfter moving up:\n")
-    game_board = move_up(game_board)
-    display_board(game_board)
-
-    print("\nAfter moving down:\n")
-    game_board = move_down(game_board)
-    display_board(game_board)
+    while True:
+        move = input("Enter move (w/a/s/d): ")
+        if move in ['w', 'a', 's', 'd']:
+            game_board = handle_input(game_board, move)
+            add_random_tile(game_board)
+            display_board(game_board)
+        else:
+            print("Invalid move! Please enter 'w', 'a', 's', or 'd'.")
